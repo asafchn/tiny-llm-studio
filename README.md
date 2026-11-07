@@ -2,6 +2,24 @@
 
 A local web UI for [skyzh/tiny-llm](https://github.com/skyzh/tiny-llm): read the book, edit your code, run the day's tests and chat with a hint-only tutor (Claude Code on your own plan, Sonnet, medium effort). Runs in Ubuntu on WSL and listens only on `127.0.0.1:3000`.
 
+## How it looks
+
+**Overview**: four weeks, one square per day, and a Continue button that picks up where you stopped.
+
+![Overview: weeks and days with progress](docs/screenshots/overview.png)
+
+**Chapter + editor**: the book on the left, your file on the right. Ctrl+S saves, Ctrl+Enter runs that day's tests.
+
+![A chapter next to the code editor](docs/screenshots/practice.png)
+
+**Tutor**: hint-only help from Claude (Sonnet, medium effort) on your own plan. Pick a mode and how big the hint should be; it never writes the answer for you.
+
+![The tutor panel with modes and hint levels](docs/screenshots/tutor.png)
+
+**Setup**: a checklist that turns green by itself.
+
+![Setup checklist](docs/screenshots/setup.png)
+
 ## New PC: one-time setup
 
 1. Install [Git for Windows](https://git-scm.com/download/win) and sign in to GitHub on the PC (SSH key or Git Credential Manager), since both repos are private.
