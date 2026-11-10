@@ -1,29 +1,33 @@
 # Hint ladder - detail
 
-The four levels trade specificity for the learner's own discovery. The goal at every level is the *smallest* hint that unblocks them; the level sets the ceiling, not the target.
+The ladder covers **design and code decisions in the learner's exercise**: structure, data flow, shapes between stages, which axis, what a line does. It does **not** cover math: formulas, symbols, and why the math is the way it is are explained fully at every level (see SKILL.md, "Learner profile").
+
+The goal at every level is the smallest hint that unblocks them; the level sets the ceiling, not the target.
 
 | Level | You reveal | You do NOT reveal | Typical form |
 |---|---|---|---|
-| 1. Nudge | That something deserves another look; a direction of thought | Where the bug is, what it is | A question, a reframe, "re-read the line in the chapter about X" |
-| 2. Point at the area | The function / block / concept that's wrong | The exact line, the fix | "The problem is in how the mask meets the scores." |
-| 3. Point at the line | The specific line/expression and what's wrong about its *behaviour* (shape, value, dtype, axis) | The corrected expression | "Line 18: `mask` here has shape (L,), scores are (..., L, L). Which axis does it broadcast along?" |
-| 4. Walk through the idea | The full reasoning chain, step by step, with the learner supplying each step | The final code / the final answer the reasoning leads to | Guided derivation that ends with "now write it." |
+| 1. Nudge | That a design decision deserves another look | Where the bug is | A question or reframe |
+| 2. Point at the area | The function, block, or pipeline stage that's wrong | The exact line, the fix | "The problem is where the mask meets the scores." |
+| 3. Point at the line | The specific line and what's wrong about its *behaviour* (shape, value, axis, data flow) | The corrected code | "Line 18: `mask` is (L,), scores are (..., L, L). Which axis does it line up with?" |
+| 4. Walk through the idea | The design stage by stage: each stage's contract and shapes, with all math explained | The final code | Guided walk that ends with "now write it." |
 
 ## Rules of thumb
 
-- **Stay at the level the UI sends.** If the learner is at Nudge, don't sneak in a line number "to be helpful".
-- **A level change is a fresh hint, not a repeat.** When they raise the level, build on the previous hint rather than restating it.
-- **Several bugs?** Hint on the first failing one only (usually the one the first failing test exercises). Mention "there's more after this" only if it'll save them confusion.
-- **Level 4 is a dialogue, not a monologue.** Walk one step, ask them to fill the next. If you find yourself writing the full chain in one message, you've basically written the answer in prose - split it.
-- **What "the final step" means.** At level 4 the learner must still produce the thing that would make the test pass: the line of code, the axis number, the expression. You can get them to the point where it's obvious; they still say/write it.
-- **Correct answers from the learner:** confirm clearly ("Yes, exactly.") - confirming their answer isn't giving it away. Wrong answers: don't say what the right one is; ask a question that exposes the contradiction ("If it's (L, D), can you multiply it by V which is (L, D)?").
-- **Concept vs exercise.** General knowledge (what broadcasting is, what softmax does, why scale by 1/sqrt(d)) can be explained at any level in Explain mode. The ladder governs hints *about their exercise code*.
+- **Math is never rationed.** If the learner is stuck because they don't understand what a formula says, explain it completely, even at Nudge, then hint on the design/code part at the current level.
+- **How to tell math from design.** Math: "what does √d mean", "why softmax", "what does this Σ do", "what is d_k here", "what's the default scale per the chapter". Design/code: "which axis do I transpose", "what shape should go into the attention function", "how do I split heads", "where does the mask go in my code".
+- **Stay at the level the UI sends** for design hints. Don't sneak in a line number at Nudge.
+- **A level change is a fresh hint**, building on the previous one, not a repeat.
+- **Several bugs?** Hint on the first failing one only.
+- **Level 4 is a dialogue.** Walk one stage, let them design the next. They still write the final code.
+- **Correct answers:** confirm clearly. **Wrong answers on design:** ask a question that exposes the contradiction ("If it's (L, D), can it multiply V which is (L, D)?"). **Wrong answers on math:** just correct them and explain.
 
 ## Level examples on one bug
 
-Bug: learner's `scaled_dot_product_attention_simple` multiplies scores by `scale` without handling `scale=None`, so the default-scale test errors.
+Bug: the learner's `scaled_dot_product_attention_simple` multiplies by `scale` without handling `scale=None`, so the default-scale test errors.
 
-1. Nudge: "Look at the function signature again - which of the arguments can a caller leave out?"
+1. Nudge: "Look at the signature again: which argument can a caller leave out, and what happens to it then?"
 2. Area: "The failure is in how `scale` gets used when the caller doesn't provide one."
-3. Line: "Line 11 multiplies by `scale`. In the default-scale test, `scale` is `None` there. What should it be instead, per the chapter?"
-4. Walk: "The chapter says the default is 1 over the square root of d_k. Step 1: which tensor dimension is d_k here - what's the shape of `query`? ... Right, the last one. Step 2: how do you read that size off the array? ... Good. Now write the line that sets `scale` when it's missing."
+3. Line: "Line 11 multiplies by `scale`, which is `None` in the default test. The chapter's default is 1/√D, where D is the size of each query/key vector (the last axis of `query`): it keeps the scores from getting huge as vectors get longer. Where in your function should that default be decided?"
+4. Walk: "Default scale = 1/√D, D = last axis of `query`. Stage 1: decide the effective scale at the top of the function, before any math. Stage 2: use it on the scores. How would you read D off `query`? ... Good, now write the line."
+
+Note that the math (what the default is, what D is, why it exists) is given in full from level 3 on, and could be given at levels 1-2 too if the learner asked what the default should be. What's held back is the code.
